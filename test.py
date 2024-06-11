@@ -44,3 +44,8 @@ a._reward_table = {pos():   1,
                    right(): 3}
 
 assert(a.choose_action(action_list)() == right())
+
+m = maze.Maze()
+assert(tuple(m.start) == (1,0))
+new_pos = m.start+np.array([0,-1])
+assert(m.check_pos(m.start+np.array([0,-1])) == False)

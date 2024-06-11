@@ -12,7 +12,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 class Maze():
-    def __init__(self, rules='relaxed', player_type='human'):
+    def __init__(self, rules='relaxed', player_type='human', maze='default'):
         """Set up the maze, and store `rules` and `player_type`"""
         self.maze = np.array([[1,1,1,1,1,1,1],
                               [1,0,0,0,0,0,1],
@@ -22,8 +22,11 @@ class Maze():
                               [1,0,0,0,0,0,1],
                               [1,1,1,1,1,1,1]], dtype=int).T
         
-        self.pos = np.array([1,1], dtype=int)
+        self.start = np.array([1,0], dtype=int)
         self.end = np.array([5,6], dtype=int)
+
+        self.pos = np.copy(self.start)
+
 
         # position player at start position in the maze
         self.maze[*self.pos] = 2
@@ -55,7 +58,6 @@ class Maze():
 
     def check_pos(self, pos) -> bool:
         """Check if the position is an allowed position of the maze"""
-
         # return False if pos is a wall
         if self.maze[*pos] == 1: return False
 
