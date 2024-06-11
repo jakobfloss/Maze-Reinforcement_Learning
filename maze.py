@@ -14,17 +14,8 @@ class bcolors:
 class Maze():
     def __init__(self, rules='relaxed', player_type='human', maze='default'):
         """Set up the maze, and store `rules` and `player_type`"""
-        self.maze = np.array([[1,1,1,1,1,1,1],
-                              [1,0,0,0,0,0,1],
-                              [1,0,0,0,0,0,1],
-                              [1,0,0,1,1,1,1],
-                              [1,0,0,1,0,0,1],
-                              [1,0,0,0,0,0,1],
-                              [1,1,1,1,1,1,1]], dtype=int).T
-        
-        self.start = np.array([1,0], dtype=int)
-        self.end = np.array([5,6], dtype=int)
 
+        self.load_maze(maze)
         self.pos = np.copy(self.start)
 
 
@@ -37,6 +28,39 @@ class Maze():
 
         self.rules = rules
         self._player_type = player_type
+    
+    def load_maze(self, filename):
+        if filename == 'default':
+            self.maze = np.array([[1,1,1,1,1,1,1],
+                                  [1,0,0,0,0,0,1],
+                                  [1,0,0,0,0,0,1],
+                                  [1,0,0,1,1,1,1],
+                                  [1,0,0,1,0,0,1],
+                                  [1,0,0,0,0,0,1],
+                                  [1,1,1,1,1,1,1]], dtype=int).T
+            
+            self.maze_shape = (7,7)
+            self.start = np.array([1,0], dtype=int)
+            self.end = np.array([5,6], dtype=int)
+        else:
+            # print('loading maze')
+            file = open(filename)
+            lines = file.readlines()
+            self.maze_shape = (len(lines), len(lines))
+            
+            self.maze = np.zeros(shape=self.maze_shape)
+
+            for j, line in enumerate(lines):
+                for i, char in enumerate(line[::2]):
+                    match char:
+                        case 'x': self.maze[i,j] = 1
+                        case ' ': self.maze[i,j] = 0
+                        case '2': 
+                            self.start = np.array([i,j], dtype=int)
+                            self.maze[i,j] = 0
+                        case '3':
+                            self.end = np.array([i,j], dtype=int)
+                            self.maze[i,j] = 0
 
     def __str__(self):
         """String representation of the maze, to enable `print(Maze)`"""

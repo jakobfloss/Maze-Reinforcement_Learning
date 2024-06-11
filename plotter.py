@@ -51,12 +51,14 @@ def plot_steps(steps, ax):
     ax.set_ylabel('number of steps')
 
 def plot(steps, maze, agent):
-    fig, axs = plt.subplots(1,2, figsize=(6.4, 2.5), layout='constrained')
+    fig, axs = plt.subplots(1,2, figsize=(6.4, 2.5), layout='tight')#, title=f"learning rate: {agent._learning_rate}, exploration rate: {agent._exploration_factor}")
 
     plot_maze(maze, axs[1])
     plot_rewards(agent, fig, axs[1])
     plot_path(agent, fig, axs[1])
     plot_steps(steps, axs[0])
+
+    plt.suptitle(f"learning rate: {agent._learning_rate}, exploration rate: {agent._exploration_factor:.2f}")
     # plt.savefig(f'animation/{len(steps):03d}.jpg')
     plt.savefig(f'tmp_anim_frames/{len(steps):03d}.png')
     plt.close()
@@ -66,7 +68,5 @@ def prepare_animation():
     except FileExistsError: pass
 
 def create_animation(name):
-    os.system(f'convert -delay 20 -loop 0 animation_png/* {name}')
+    os.system(f'convert -delay 20 tmp_anim_frames/* learning_animations/{name}')
     os.system('rm -rf tmp_anim_frames/')
-# finally create gif via in the command line
-#!convert -delay 20 -loop 0 animation_png/* learning.gif

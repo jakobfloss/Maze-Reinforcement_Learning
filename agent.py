@@ -8,19 +8,19 @@ class Agent():
             self,
             learning_rate,
             exploration_factor,
-            maze_size=7,
+            maze_shape=7,
         ):
 
 
-        self._maze_size = maze_size
+        self._maze_shape = maze_shape
 
         self._learning_rate = learning_rate
         self._exploration_factor = exploration_factor
 
         self._rng = np.random.default_rng()
 
-        self._reward_table = np.zeros(shape=(maze_size, maze_size))
-        # self._reward_table = 0.1 + 0.9*self._rng.uniform(size=(maze_size, maze_size))
+        self._reward_table = np.zeros(shape=maze_shape)
+        # self._reward_table = 0.1 + 0.9*self._rng.uniform(size=maze_shape)
         # self._reward_table = {}
         self._moves = []
 
@@ -39,7 +39,7 @@ class Agent():
 # this function is deprecated
     # def create_reward_table(self):
     #     reward_table = {}
-    #     rewards = 0.1 + 0.9*self._rng.uniform(size=(self._maze_size, self._maze_size))
+    #     rewards = 0.1 + 0.9*self._rng.uniform(size=self._maze_shape)
 
     #     for i, col in enumerate(rewards):
     #         for j, reward in enumerate(col):
