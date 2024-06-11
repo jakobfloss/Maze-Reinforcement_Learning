@@ -1,72 +1,82 @@
+#%%
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import os
 
-# from matplotlib.offsetbox import (OffsetImage, AnnotationBbox)
+#%%
+def prepare_animation(agent, maze):
+    # remove frames from previous unfinished runs
+    os.system('rm -rf tmp_anim_frames/')
+    os.mkdir('tmp_anim_frames/')
 
-def plot_maze(maze, ax):
-    walls = maze.maze
-    walls[*maze.start] = 0
-    walls[*maze.end] = 0
+    # set up figure
+    fig, axs = plt.subplots(1,2, figsize=(12, 5), layout='tight')
+    plt.suptitle(f"Learning Rate: {agent._learning_rate}    Exploration Rate: {agent._exploration_rate}")
+
+    # set up steps on left panel
+    axs[0].set_xlim((0, 1))
+    axs[0].set_ylim((1, 1100))
+    axs[0].set_xlabel('attempts')
+    axs[0].set_ylabel('steps')
+    axs[0].set_yscale('log')
+    line_steps = axs[0].plot([])[0]
+
+    # draw maze, path, rewards on right panel
+    # remove ticks and labels
+    axs[1].set_xticks([])
+    axs[1].set_yticks([])
 
     # https://www.freepik.com/search?format=search&last_filter=query&last_value=person&query=person&type=icon
     start_icon = plt.imread('images/start_blue.png')
     finish_icon = plt.imread('images/finish_blue.png')
-    player_icon = plt.imread('images/player_blue.png')
+    axs[1].imshow(start_icon, extent=[maze.start[1]-0.4, maze.start[1]+0.4, maze.start[0]+0.4, maze.start[0]-0.4], zorder=3)
+    axs[1].imshow(finish_icon, extent=[maze.end[1]-0.4, maze.end[1]+0.4, maze.end[0]+0.4, maze.end[0]-0.4], zorder=3)
 
-    ax.imshow(start_icon, extent=[maze.start[0]-0.4, maze.start[0]+0.4, maze.start[1]+0.4, maze.start[1]-0.4], zorder=2)
-    ax.imshow(finish_icon, extent=[maze.end[0]-0.4, maze.end[0]+0.4, maze.end[1]+0.4, maze.end[1]-0.4], zorder=2)
-    ax.imshow(player_icon, extent=[maze.pos[0]-0.4, maze.pos[0]+0.4, maze.pos[1]+0.4, maze.pos[1]-0.4], zorder=2)
-    ax.imshow(walls.T, cmap='Greys', vmin=0, vmax=1, zorder=1)
+    # create cmap for maze which is transparent for values below vmin
+    cmap_maze = mpl.cm.get_cmap('Greys')
+    cmap_maze.set_under((0,0,0,0)) #(0,0,0,0) is black with alpha = 0
+    # draw maze with vmin = 0.5 -> entries within (0) are transparent
+    axs[1].imshow(maze.maze, cmap=cmap_maze, vmin=0.5, vmax=1, zorder=2)
 
-def plot_rewards(agent, fig, ax):
-    """Plot reward matrix ontop of maze."""
-    # create a cmap whick is transparent for values above vmax
-    # stack overflow answer 
-    # <https://stackoverflow.com/a/16401183/17822608>
-    my_cmap = mpl.cm.get_cmap('RdYlGn')
-    my_cmap.set_under((0,0,0,0)) #(0,0,0,0) is black with alpha = 0
-    my_cmap.set_over((0,0,0,0)) #(0,0,0,0) is black with alpha = 0
-
-    # plot 
-    rwrds = ax.imshow(agent._reward_table.T, cmap=my_cmap, zorder=1, vmax=-1e-10)
-
-    divider = make_axes_locatable(ax)
+    # plot rewards with zorder 1 (below maze)
+    im_rewards = axs[1].imshow(agent._reward_table, cmap='RdYlGn', zorder=1, vmin=-1000, vmax=0)
+    # create colorbar
+    divider = make_axes_locatable(axs[1])
     cax = divider.append_axes('right', size='5%', pad=0.1)
 
-    fig.colorbar(rwrds, cax=cax, orientation='vertical')
+    fig.colorbar(im_rewards, cax=cax, orientation='vertical')
 
-def plot_path(agent, fig, ax):
-    np.array([pos for pos, rew in agent.last_moves]).T
-    ax.plot(*np.array([pos for pos, rew in agent.last_moves]).T)
+    # plot path
+    line_path = axs[1].plot([])[0]
 
-def plot_steps(steps, ax):
-    ax.plot(steps)
+    def update_frame(agent, steps):
+        # update steps
+        line_steps.set_xdata(np.arange(len(steps)))
+        line_steps.set_ydata(steps)
+        axs[0].set_xlim((0, len(steps)))
 
-    ax.set_yscale('log')
+        # update path
+        i, j = np.array([pos for pos, rew in agent.last_moves]).T
+        line_path.set_xdata(j)
+        line_path.set_ydata(i)
 
-    ax.set_xlabel('attempt')
-    ax.set_ylabel('number of steps')
+        # update rewards
+        im_rewards.set_data(agent._reward_table)
 
-def plot(steps, maze, agent):
-    fig, axs = plt.subplots(1,2, figsize=(6.4, 2.5), layout='tight')#, title=f"learning rate: {agent._learning_rate}, exploration rate: {agent._exploration_factor}")
+        plt.savefig(f'tmp_anim_frames/{len(steps):03d}.png', dpi=100)
 
-    plot_maze(maze, axs[1])
-    plot_rewards(agent, fig, axs[1])
-    plot_path(agent, fig, axs[1])
-    plot_steps(steps, axs[0])
+    return update_frame, fig
 
-    plt.suptitle(f"learning rate: {agent._learning_rate}, exploration rate: {agent._exploration_factor:.2f}")
-    # plt.savefig(f'animation/{len(steps):03d}.jpg')
-    plt.savefig(f'tmp_anim_frames/{len(steps):03d}.png')
-    plt.close()
-
-def prepare_animation():
-    try: os.mkdir('tmp_anim_frames/')
-    except FileExistsError: pass
-
-def create_animation(name):
+#%%
+def create_animation(name, fig):
+    # use ImageMagick to reate animation
+    # stackoverflow: <https://askubuntu.com/a/648245>
+    # reduce file size
+    # stackoverflow: <https://askubuntu.com/a/757963>
+    # os.system(f'convert -delay 20 -resize 20% tmp_anim_frames/* learning_animations/{name}')
     os.system(f'convert -delay 20 tmp_anim_frames/* learning_animations/{name}')
     os.system('rm -rf tmp_anim_frames/')
+
+    plt.close(fig)

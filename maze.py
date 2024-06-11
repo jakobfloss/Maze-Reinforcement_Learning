@@ -1,5 +1,6 @@
 import numpy as np
 
+# for colored terminal output
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -15,6 +16,9 @@ class Maze():
     def __init__(self, rules='relaxed', player_type='human', maze='default'):
         """Set up the maze, and store `rules` and `player_type`"""
 
+        # index i defines row (y-axis)
+        # index j defines col (x-axis)
+
         self.load_maze(maze)
         self.pos = np.copy(self.start)
 
@@ -28,20 +32,27 @@ class Maze():
 
         self.rules = rules
         self._player_type = player_type
+
+    def reset(self):
+        self.pos = np.copy(self.start)
+        self._steps = 0
+        self._game_over = False
+
     
     def load_maze(self, filename):
+        # load the default maze, as suggested in the tutorial
         if filename == 'default':
-            self.maze = np.array([[1,1,1,1,1,1,1],
+            self.maze = np.array([[1,0,1,1,1,1,1],
                                   [1,0,0,0,0,0,1],
                                   [1,0,0,0,0,0,1],
                                   [1,0,0,1,1,1,1],
                                   [1,0,0,1,0,0,1],
                                   [1,0,0,0,0,0,1],
-                                  [1,1,1,1,1,1,1]], dtype=int).T
+                                  [1,1,1,1,1,0,1]], dtype=int)
             
             self.maze_shape = (7,7)
-            self.start = np.array([1,0], dtype=int)
-            self.end = np.array([5,6], dtype=int)
+            self.start = np.array([0,1], dtype=int)
+            self.end = np.array([6,5], dtype=int)
         else:
             # print('loading maze')
             file = open(filename)
@@ -50,8 +61,11 @@ class Maze():
             
             self.maze = np.zeros(shape=self.maze_shape)
 
-            for j, line in enumerate(lines):
-                for i, char in enumerate(line[::2]):
+            for i, line in enumerate(lines):
+                # remove every second character (' ') whis is just there
+                # for better visuals of the text file
+                for j, char in enumerate(line[::2]):
+
                     match char:
                         case 'x': self.maze[i,j] = 1
                         case ' ': self.maze[i,j] = 0
@@ -65,9 +79,9 @@ class Maze():
     def __str__(self):
         """String representation of the maze, to enable `print(Maze)`"""
         string = ""
-        for j, row in enumerate(self.maze.T):
-            for i, loc in enumerate(row):
-                match loc:
+        for row in self.maze:
+            for pos in row:
+                match pos:
                     case 0:
                         string += ' '
                     case 1:
@@ -175,23 +189,10 @@ class Maze():
         if self.is_won(): return 0
         else: return -1
     
-# this function seems deprecated
-    # def get_possible_states(self):
-    #     possible_states = []
-    #     for i, row in enumerate(self.maze):
-    #         for j, pos in enumerate(row):
-    #             if pos != 1:
-    #                 possible_states.append((i,j))
-    #     print(possible_states)
-    #     return possible_states
-        
-    
 ########################################################################
 # From here there is code for direct execution of the maze as an       #
 # interactive game                                                     #
 ########################################################################
-
-# For prettier terminal print outs
 
 def play(rules='relaxed'):    
     m = Maze(rules)
