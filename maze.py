@@ -32,6 +32,7 @@ class Maze():
 
         self.rules = rules
         self._player_type = player_type
+        self._allowed_tries = self.shape[0]**2
 
     def reset(self):
         self.pos = np.copy(self.start)
@@ -50,16 +51,16 @@ class Maze():
                                   [1,0,0,0,0,0,1],
                                   [1,1,1,1,1,0,1]], dtype=int)
             
-            self.maze_shape = (7,7)
+            self.shape = (7,7)
             self.start = np.array([0,1], dtype=int)
             self.end = np.array([6,5], dtype=int)
         else:
             # print('loading maze')
             file = open(filename)
             lines = file.readlines()
-            self.maze_shape = (len(lines), len(lines))
+            self.shape = (len(lines), len(lines))
             
-            self.maze = np.zeros(shape=self.maze_shape)
+            self.maze = np.zeros(shape=self.shape)
 
             for i, line in enumerate(lines):
                 # remove every second character (' ') whis is just there
@@ -154,7 +155,7 @@ class Maze():
         if self.is_won(): self._game_over = True
 
         # end game if player has take too many moves
-        if self._steps > 1000: self._game_over = True
+        if self._steps > self._allowed_tries: self._game_over = True
 
     def up(self):
         """Position above player"""
@@ -186,7 +187,7 @@ class Maze():
     
     def give_reward(self):
         """Reward function to train agent"""
-        if self.is_won(): return 0
+        if self.is_won(): return self.shape[0]**2
         else: return -1
     
 ########################################################################

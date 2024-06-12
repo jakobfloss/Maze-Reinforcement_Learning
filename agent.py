@@ -18,7 +18,8 @@ class Agent():
         self._reward_table = np.zeros(shape = self._maze_shape)
 
         # storage for moves from one episode (game)
-        self._moves = []
+        self._pos_history = []
+        self._rew_history = []
 
         # provide random number generator for random moves
         self._rng = np.random.default_rng()
@@ -42,10 +43,20 @@ class Agent():
                 max_reward = self._reward_table[*action()]
                 chosen_action = action
         
+        # attempt to make him not reverse moves immediatly
+        # if action returns to previous position choose again with
+        # certain probability
+        try:
+            if tuple(chosen_action()) == tuple(self._pos_history[-2]):
+                if self._rng.uniform() < 0.75:
+                    return self.choose_action(action_list)
+        except IndexError: pass
+        
         return chosen_action
      
-    def store_reward(self, pos_and_reward):
-        self._moves.append(pos_and_reward)
+    def store_reward(self, pos, reward):
+        self._pos_history.append(tuple(pos))
+        self._rew_history.append(reward)
     
     def learn(self):
         "Learn form the past steps taken"
@@ -56,7 +67,7 @@ class Agent():
         cum_reward = 0
 
         # follow the path backwards (ie. start at last position)
-        for pos, pos_reward in reversed(self._moves):
+        for pos, pos_reward in zip(self._pos_history[::-1], self._rew_history[::-1]):
             # add all reward of cumulatively
             # this ensures each position along the path gets smaller and
             # smaller rewards 
@@ -66,9 +77,38 @@ class Agent():
                 self._learning_rate*(cum_reward-self._reward_table[*pos])
         
         # reduce exploration rate
-        self._exploration_rate *= 0.99
+        self._exploration_rate *= 1-10**(-np.log(self._maze_shape[0]))
 
         # store move - only convenient for plotting
-        self.last_moves = self._moves
-        # empty 
-        self._moves = []
+        self.last_pos_history = self._pos_history
+        # empty reward and position history for next episode
+        self._pos_history = []
+        self._rew_history = []
+
+    def learn_2(self):
+        """Improved learning algorithm
+        This algorithm only updates the reward table with the smalles
+        reward from the path. Otherwise if the path ends is a dead end
+        the end of path becomes a reward close to zero, which favours
+        them.
+        """
+        cum_rewards = np.cumsum(self._rew_history[::-1])[::-1]
+        for i in range(self._maze_shape[0]):
+            for j in range(self._maze_shape[1]):
+                try:
+                    low_index = self._pos_history.index((i,j))
+                    cum_reward = cum_rewards[low_index]
+
+                    self._reward_table[i, j] += \
+                        self._learning_rate*(cum_reward-self._reward_table[i, j])
+                except ValueError: pass
+        
+        # reduce exploration rate
+        self._exploration_rate *= 1-10**(-np.log(self._maze_shape[0]))
+
+        # store move - only convenient for plotting
+        self.last_pos_history = self._pos_history
+        # empty reward and position history for next episode
+        self._pos_history = []
+        self._rew_history = []
+                
