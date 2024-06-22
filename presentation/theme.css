@@ -1,0 +1,127 @@
+/* @theme uibk */
+
+@import 'default';
+
+:root {
+    --uibk_blue:rgb(0,51,97);
+    --uibk_orange: rgb(243,146,0);
+}
+
+/* uibk_orange: rgb(243,146,0)
+uibk_blue: rgb(0,51,97) */
+
+h1 {
+    color: var(--uibk_orange);
+    border-bottom: 2px solid var(--uibk_blue);
+    /* text-decoration: underline;
+    text-decoration-color: var(--uibk_blue); */
+    position: absolute;
+    top: 25px;
+    left: 20px;
+    right: 20px;
+    padding-bottom: 5px;
+    padding-left: 55px
+}
+
+h2 {
+    color: var(--uibk_blue);
+}
+
+section {
+    background-image: url('figures/uibk_logo.png');
+    background-repeat: no-repeat;
+    background-position: bottom 5px left 20px;
+    background-size: auto 60px;
+}
+
+section > footer {
+    grid-area: footer;
+    border-top: 2px dashed var(--uibk_blue);
+    text-align: center;
+    position: absolute;
+    height: 62.5px;
+    left: 20px;
+    right: 20px;
+    bottom: 0px;
+    font-size: 20px;
+    padding-top: 2.5px;
+    border-top: 2px dashed var(--uibk_blue);
+    display: block;
+    text-align: center;
+}
+
+section::after {
+    content: attr(data-marpit-pagination) '/' attr(data-marpit-pagination-total);
+}
+
+
+span {
+    display: inline-block;
+    vertical-align: middle;
+    line-height: normal;
+}
+
+section::after {
+    content: 'Jakob Floss';
+    /* right: auto; */
+    /* left: 500px; */
+}
+
+
+/* li {
+    list-style-type: "\25B8\ ";
+    margin: -5px;
+    border: 1px dashed black;
+} */
+
+ol li::before {
+    content: counter(my-awesome-counter);
+    background: var(--uibk_orange);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: inline-block;
+    line-height: 2rem;
+    color: white;
+    text-align: center;
+    margin-right: 0.5rem;
+}
+
+ol ol li::before {
+    background: var(--uibk_blue);
+}
+
+
+ul li {
+    margin-left: -30px;
+}
+
+ul li::marker {
+    content: "\25B8\ ";
+    color: var(--uibk_orange);
+}
+
+ul ul li::marker {
+    color: var(--uibk_blue);
+}
+
+.columns {
+    position: absolute;
+    top: 100px;
+    left: 80px;
+    right: 80px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.columns3 {
+    position: absolute;
+    top: 100px;
+    left: 80px;
+    right: 80px;
+    bottom: 60px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
