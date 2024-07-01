@@ -2,15 +2,15 @@ import numpy as np
 
 # for colored terminal output
 class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    HEADER      = '\033[95m'
+    OKBLUE      = '\033[94m'
+    OKCYAN      = '\033[96m'
+    OKGREEN     = '\033[92m'
+    WARNING     = '\033[93m'
+    FAIL        = '\033[91m'
+    ENDC        = '\033[0m'
+    BOLD        = '\033[1m'
+    UNDERLINE   = '\033[4m'
 
 class Maze():
     def __init__(self, rules='relaxed', player_type='human', maze='default'):
@@ -19,7 +19,7 @@ class Maze():
         # index i defines row (y-axis)
         # index j defines col (x-axis)
 
-        self.load_maze(maze)
+        self._load_maze(maze)
         self.pos = np.copy(self.start)
 
 
@@ -38,9 +38,8 @@ class Maze():
         self.pos = np.copy(self.start)
         self._steps = 0
         self._game_over = False
-
     
-    def load_maze(self, filename):
+    def _load_maze(self, filename):
         # load the default maze, as suggested in the tutorial
         if filename == 'default':
             self.maze = np.array([[1,0,1,1,1,1,1],
@@ -56,7 +55,7 @@ class Maze():
             self.end = np.array([6,5], dtype=int)
         else:
             # print('loading maze')
-            file = open(filename)
+            file = open('mazes/' + filename)
             lines = file.readlines()
             self.shape = (len(lines), len(lines))
             
@@ -95,7 +94,7 @@ class Maze():
             string += '\n'
         return string
 
-    def check_pos(self, pos) -> bool:
+    def _check_pos(self, pos) -> bool:
         """Check if the position is an allowed position of the maze"""
         # return False if pos is a wall
         if self.maze[*pos] == 1: return False
@@ -106,13 +105,13 @@ class Maze():
     def _allowed_moves(self):
         allowed_moves = []
         if self._player_type == 'human':
-            if self.check_pos(self.up()): allowed_moves.append('U')
-            if self.check_pos(self.down()): allowed_moves.append('D')
-            if self.check_pos(self.left()): allowed_moves.append('L')
-            if self.check_pos(self.right()): allowed_moves.append('R')
+            if self._check_pos(self.up()): allowed_moves.append('U')
+            if self._check_pos(self.down()): allowed_moves.append('D')
+            if self._check_pos(self.left()): allowed_moves.append('L')
+            if self._check_pos(self.right()): allowed_moves.append('R')
         if self._player_type == 'robot':
             for action in [self.up, self.down, self.left, self.right]:
-                if self.check_pos(action()): allowed_moves.append(action)
+                if self._check_pos(action()): allowed_moves.append(action)
         return allowed_moves
     
     def get_moves(self):
@@ -130,7 +129,7 @@ class Maze():
         """Move player to the new position"""
 
         # handle forbidden move
-        if self.check_pos(new_pos) == False:
+        if self._check_pos(new_pos) == False:
             # if rules are relaxed player may simply try again
             if self.rules == 'relaxed': 
                 print(bcolors.WARNING + 
@@ -152,7 +151,7 @@ class Maze():
         self._steps += 1
 
         # end game if player is at the end
-        if self.is_won(): self._game_over = True
+        if self._is_won(): self._game_over = True
 
         # end game if player has take too many moves
         if self._steps > self._allowed_tries: self._game_over = True
@@ -174,21 +173,20 @@ class Maze():
         return self.pos + [+1,0]
         
     def get_state_and_reward(self):
-        return self.pos, self.give_reward()
+        """Reward function to train agent"""
+        # if self._is_won(): reward = self.shape[0]**2
+        # else: reward = -1
+        
+        return self.pos, -1
     
     def is_game_over(self):
         return self._game_over
     
-    def is_won(self):
+    def _is_won(self):
         return tuple(self.pos) == tuple(self.end)
     
     def get_steps(self):
         return self._steps
-    
-    def give_reward(self):
-        """Reward function to train agent"""
-        if self.is_won(): return self.shape[0]**2
-        else: return -1
     
 ########################################################################
 # From here there is code for direct execution of the maze as an       #
@@ -217,7 +215,7 @@ def play(rules='relaxed'):
 
     print(m)
 
-    if m.is_won(): print(bcolors.OKGREEN + "You Won!\n" + bcolors.ENDC)
+    if m._is_won(): print(bcolors.OKGREEN + "You Won!\n" + bcolors.ENDC)
     else: print(bcolors.FAIL + "You Lost!\n" + bcolors.ENDC)
 
 def main():

@@ -8,11 +8,13 @@ class Agent():
             self,
             learning_rate,
             exploration_rate,
+            decrease_rate=0.95,
             maze_shape=7,
         ):
         self._maze_shape = maze_shape
         self._learning_rate = learning_rate
         self._exploration_rate = exploration_rate
+        self._decrease_rate = decrease_rate
 
         # initialize entire reward table to zero
         self._reward_table = np.zeros(shape = self._maze_shape)
@@ -28,31 +30,31 @@ class Agent():
         """Choose action from action list"""
 
         # choose random action
-        chosen_action = action_list[self._rng.integers(low=0, high=len(action_list))]
+        index = self._rng.integers(low=0, high=len(action_list))
 
-        # explore with chance of exploration_rate
-        if self._rng.random() < self._exploration_rate:
-            return chosen_action
-
-        # before this loop a random action should be chosen in case all
-        # actions lead to same result
-        max_reward = -np.inf
-        # choose action which provides the maximum reward
-        for action in action_list:
-            if self._reward_table[*action()] > max_reward:
-                max_reward = self._reward_table[*action()]
-                chosen_action = action
+        # exploit with chance of 1 - exploration_rate
+        if self._rng.random() > self._exploration_rate:
+            # before this loop a random action should be chosen in case all
+            # actions lead to same result
+            max_reward = -np.inf
+            # choose action which provides the maximum reward
+            for i, action in enumerate(action_list):
+                if self._reward_table[*action()] > max_reward:
+                    max_reward = self._reward_table[*action()]
+                    index = i
         
         # attempt to make him not reverse moves immediatly
         # if action returns to previous position choose again with
         # certain probability
-        try:
-            if tuple(chosen_action()) == tuple(self._pos_history[-2]):
-                if self._rng.uniform() < 0.75:
-                    return self.choose_action(action_list)
-        except IndexError: pass
+        # try:
+        #     if tuple(action_list[index]()) == self._pos_history[-2]:
+        #         if len(action_list) > 1:
+        #             action_list.pop(index)
+        #             return self.choose_action(action_list)
+        # # at the start he has no position history
+        # except IndexError: pass
         
-        return chosen_action
+        return action_list[index]
      
     def store_reward(self, pos, reward):
         self._pos_history.append(tuple(pos))
@@ -104,7 +106,8 @@ class Agent():
                 except ValueError: pass
         
         # reduce exploration rate
-        self._exploration_rate *= 1-10**(-np.log(self._maze_shape[0]))
+        # self._exploration_rate *= 1-10**(-np.log(self._maze_shape[0]))
+        self._exploration_rate *= self._decrease_rate
 
         # store move - only convenient for plotting
         self.last_pos_history = self._pos_history

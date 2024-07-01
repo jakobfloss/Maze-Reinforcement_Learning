@@ -41,7 +41,7 @@ def prepare_animation(agent, maze):
     axs[1].imshow(maze.maze, cmap=cmap_maze, vmin=0.5, vmax=1, zorder=2)
 
     # plot rewards with zorder 1 (below maze)
-    im_rewards = axs[1].imshow(agent._reward_table, cmap='RdYlGn', zorder=1, vmin=-maze._allowed_tries, vmax=0)
+    im_rewards = axs[1].imshow(agent._reward_table, cmap='RdYlGn', zorder=1, vmin=-maze._allowed_tries, vmax=0, norm='symlog')
     # create colorbar
     divider = make_axes_locatable(axs[1])
     cax = divider.append_axes('right', size='5%', pad=0.1)
@@ -71,6 +71,45 @@ def prepare_animation(agent, maze):
 
     return update_frame, fig
 
+def plot_solution(agent, maze, name):
+    # set up figure
+    fig, axs = plt.subplots(1,1, figsize=(6, 5), layout='tight')
+
+    axs = [axs]
+
+    # remove ticks and labels
+    axs[0].set_xticks([])
+    axs[0].set_yticks([])
+
+    # https://www.freepik.com/search?format=search&last_filter=query&last_value=person&query=person&type=icon
+    start_icon = plt.imread('images/start_blue.png')
+    finish_icon = plt.imread('images/finish_blue.png')
+    axs[0].imshow(start_icon, extent=[maze.start[1]-0.4, maze.start[1]+0.4, maze.start[0]+0.4, maze.start[0]-0.4], zorder=3)
+    axs[0].imshow(finish_icon, extent=[maze.end[1]-0.4, maze.end[1]+0.4, maze.end[0]+0.4, maze.end[0]-0.4], zorder=3)
+
+    # create cmap for maze which is transparent for values below vmin
+    cmap_maze = mpl.cm.get_cmap('Greys')
+    cmap_maze.set_under((0,0,0,0)) #(0,0,0,0) is black with alpha = 0
+    # draw maze with vmin = 0.5 -> entries within (0) are transparent
+    axs[0].imshow(maze.maze, cmap=cmap_maze, vmin=0.5, vmax=1, zorder=2)
+
+    # plot rewards with zorder 1 (below maze)
+    im_rewards = axs[0].imshow(agent._reward_table, cmap='RdYlGn', zorder=1, vmin=-maze._allowed_tries, vmax=-1, norm='symlog')
+    # create colorbar
+    divider = make_axes_locatable(axs[0])
+    cax = divider.append_axes('right', size='5%', pad=0.1)
+
+    fig.colorbar(im_rewards, cax=cax, orientation='vertical')
+
+    # plot path
+    line_path = axs[0].plot([])[0]
+    # update path
+    i, j = np.array([agent.last_pos_history]).T
+    line_path.set_xdata(j)
+    line_path.set_ydata(i)
+    plt.savefig(name)
+    plt.show()
+
 #%%
 def create_animation(name, fig):
     # use ImageMagick to reate animation
@@ -78,7 +117,7 @@ def create_animation(name, fig):
     # reduce file size
     # stackoverflow: <https://askubuntu.com/a/757963>
     # os.system(f'convert -delay 20 -resize 20% tmp_anim_frames/* learning_animations/{name}')
-    os.system(f'convert -delay 35 tmp_anim_frames/* learning_animations/{name}')
+    os.system(f'convert -delay 30 -loop 3 tmp_anim_frames/* learning_animations/{name}')
     os.system('rm -rf tmp_anim_frames/')
 
     plt.close(fig)
