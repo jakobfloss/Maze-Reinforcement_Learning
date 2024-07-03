@@ -42,17 +42,35 @@ class Agent():
                 if self._reward_table[*action()] > max_reward:
                     max_reward = self._reward_table[*action()]
                     index = i
+        return action_list[index]
+
+    def choose_action_2(self, action_list):
+        """Choose action from action list"""
+
+        # choose random action
+        index = self._rng.integers(low=0, high=len(action_list))
+
+        # exploit with chance of 1 - exploration_rate
+        if self._rng.random() > self._exploration_rate:
+            # before this loop a random action should be chosen in case all
+            # actions lead to same result
+            max_reward = -np.inf
+            # choose action which provides the maximum reward
+            for i, action in enumerate(action_list):
+                if self._reward_table[*action()] > max_reward:
+                    max_reward = self._reward_table[*action()]
+                    index = i
         
         # attempt to make him not reverse moves immediatly
         # if action returns to previous position choose again with
         # certain probability
-        # try:
-        #     if tuple(action_list[index]()) == self._pos_history[-2]:
-        #         if len(action_list) > 1:
-        #             action_list.pop(index)
-        #             return self.choose_action(action_list)
-        # # at the start he has no position history
-        # except IndexError: pass
+        try:
+            if tuple(action_list[index]()) == self._pos_history[-2]:
+                if len(action_list) > 1:
+                    action_list.pop(index)
+                    return self.choose_action(action_list)
+        # at the start he has no position history
+        except IndexError: pass
         
         return action_list[index]
      
@@ -79,7 +97,8 @@ class Agent():
                 self._learning_rate*(cum_reward-self._reward_table[*pos])
         
         # reduce exploration rate
-        self._exploration_rate *= 1-10**(-np.log(self._maze_shape[0]))
+        # self._exploration_rate *= 1-10**(-np.log(self._maze_shape[0]))
+        self._exploration_rate *= self._decrease_rate
 
         # store move - only convenient for plotting
         self.last_pos_history = self._pos_history
